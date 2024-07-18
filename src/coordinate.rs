@@ -1,32 +1,49 @@
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Coordinate {
+    /// 纬度
     pub lat: f64,
+    /// 经度
     pub lon: f64,
+}
+
+lazy_static! {
+    ///  # 表示坐标格式的正则表达式（单个数值）
+    ///  - 第一组是正负
+    ///  - 第二组是度
+    ///  - 第三组是分
+    ///  - 第四组是秒
+    static ref RE_SINGLE: Vec<Regex> = vec![
+        Regex::new(r"^([NSEW])([01]?\d{2})(\d{2}\.\d*)$").unwrap(),
+        Regex::new(r"^([NSEW])([01]?\d{2})(\d{2})(\d{2}\.\d*)$").unwrap(),
+        Regex::new(r"^([NSEW])([01]?\d{2})(\d{2})(\d{2})$").unwrap(),
+        Regex::new(r"^([NSEW])(\d{3})\.(\d{2})\.(\d{2}\.\d{3})$").unwrap(),
+        Regex::new(r"^([NSEW]) ([01]?\d{2}) (\d{2}\.\d*)$").unwrap(),
+        Regex::new(r"^([+-]?)(\d{2,3}\.\d*)$").unwrap(),
+    ];
+
+    /// 表示单位换算时的比例
+    static ref RATIO: HashMap<usize, f64> = vec![(2, 1.0), (3, 1.0 / 60.0), (4, 1.0 / 3600.0)]
+        .into_iter()
+        .collect();
+
+    /// 表示坐标格式的正则表达式（经纬度都包含）
+    static ref RE_COMBINE: Vec<Regex> = vec![
+        Regex::new(r"^([NS].*?) ?([EW].*?)$").unwrap(),  // Nxxxx.xExxxxx.x、Nxxxxxx.xExxxxxxx.x、NxxxxxxExxxxxxx、Nxxx.xx.xx.xxx Exxx.xx.xx.xxx、N xx xx.xxxxxx E xxx xx.xxxxxx
+        Regex::new(r"^(.*?),(.*?)$").unwrap(),         // xx.xxxxxxxxxxxxxx,xxx.xxxxxxxxxxxxxxx
+        Regex::new(r"^([^ ]*?) ([^ ]*?)$").unwrap()    // +xx.xxxxxxxx +xxx.xxxxxx
+    ];
 }
 
 /// 将输入的字符串变成f64类型的数值
 fn parse(s: &str) -> Option<f64> {
-    lazy_static! {
-        static ref RE: Vec<Regex> = vec![
-            Regex::new(r"^([NSEW])([01]?\d{2})(\d{2}\.\d*)$").unwrap(),
-            Regex::new(r"^([NSEW])([01]?\d{2})(\d{2})(\d{2}\.\d*)$").unwrap(),
-            Regex::new(r"^([NSEW])([01]?\d{2})(\d{2})(\d{2})$").unwrap(),
-            Regex::new(r"^([NSEW])(\d{3})\.(\d{2})\.(\d{2}\.\d{3})$").unwrap(),
-            Regex::new(r"^([NSEW]) ([01]?\d{2}) (\d{2}\.\d*)$").unwrap(),
-            Regex::new(r"^([+-]?)(\d{2,3}\.\d*)$").unwrap(),
-        ];
-        static ref RATIO: HashMap<usize, f64> = vec![(2, 1.0), (3, 1.0 / 60.0), (4, 1.0 / 3600.0)]
-            .into_iter()
-            .collect();
-    }
-
     let mut result: f64 = 0.0;
 
-    for r in RE.iter() {
+    for r in RE_SINGLE.iter() {
         if r.is_match(s) {
             let group = r.captures(s).unwrap();
             for i in 2..group.len() {
@@ -50,15 +67,7 @@ impl FromStr for Coordinate {
 
     /// 通过字符串创建Coordinate
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        lazy_static! {
-            static ref RE: Vec<Regex> = vec![
-            Regex::new(r"^([NS].*?) ?([EW].*?)$").unwrap(),  // Nxxxx.xExxxxx.x、Nxxxxxx.xExxxxxxx.x、NxxxxxxExxxxxxx、Nxxx.xx.xx.xxx Exxx.xx.xx.xxx、N xx xx.xxxxxx E xxx xx.xxxxxx
-            Regex::new(r"^(.*?),(.*?)$").unwrap(),         // xx.xxxxxxxxxxxxxx,xxx.xxxxxxxxxxxxxxx
-            Regex::new(r"^([^ ]*?) ([^ ]*?)$").unwrap()    // +xx.xxxxxxxx +xxx.xxxxxx
-            ];
-        }
-
-        for r in RE.iter() {
+        for r in RE_COMBINE.iter() {
             if r.is_match(s) {
                 let group = r.captures(s).unwrap();
                 return Ok(Coordinate {
@@ -135,4 +144,3 @@ impl Coordinate {
         self.lon.fract() * 60.0
     }
 }
-

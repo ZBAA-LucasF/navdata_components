@@ -98,4 +98,3 @@ fn minute_second() {
     assert_eq!((C4.lon_md() * 100.0).round() / 100.0, 0.0);
     assert_eq!((C5.lon_md() * 100.0).round() / 100.0, 30.06);
 }
-

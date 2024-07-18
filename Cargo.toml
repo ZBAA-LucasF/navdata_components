@@ -1,6 +1,6 @@
 [package]
 name = "navdata_components"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ['Lucas.F']
 
@@ -9,6 +9,7 @@ authors = ['Lucas.F']
 [dependencies]
 regex = "^1.10.2"
 lazy_static = "^1.4.0"
+serde = { version = "^1.0.204", features = ["derive"] }
 
 [[test]]
 path = "tests/lib.rs"
