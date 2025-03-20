@@ -39,6 +39,17 @@ lazy_static! {
     ];
 }
 
+/// 处理坐标时可能出现的错误类型
+#[derive(Debug, PartialEq)]
+pub enum CoordParseError {
+    /// 纬度处理错误
+    LatParseError,
+    /// 经度处理错误
+    LonParseError,
+    /// 没有匹配的格式
+    NoMatchingFormat,
+}
+
 /// 将输入的字符串变成f64类型的数值
 fn parse(s: &str) -> Option<f64> {
     let mut result: f64 = 0.0;
@@ -63,7 +74,7 @@ fn parse(s: &str) -> Option<f64> {
 }
 
 impl FromStr for Coordinate {
-    type Err = &'static str;
+    type Err = CoordParseError;
 
     /// 通过字符串创建Coordinate
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -73,16 +84,16 @@ impl FromStr for Coordinate {
                 return Ok(Coordinate {
                     lat: match parse(group.get(1).unwrap().as_str()) {
                         Some(x) => x,
-                        None => return Err("lat parse error"),
+                        None => return Err(Self::Err::LatParseError),
                     },
                     lon: match parse(group.get(2).unwrap().as_str()) {
                         Some(x) => x,
-                        None => return Err("lon parse error"),
+                        None => return Err(Self::Err::LonParseError),
                     },
                 });
             }
         }
-        Err("Failed")
+        Err(Self::Err::NoMatchingFormat)
     }
 }
 

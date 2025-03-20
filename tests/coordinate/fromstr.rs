@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use navdata_components::coordinate::Coordinate;
+use navdata_components::coordinate::{CoordParseError, Coordinate};
 
 #[allow(non_snake_case)]
 #[test]
@@ -195,11 +195,11 @@ fn test_fromstr_xx_2() {
 #[test]
 fn test_lat_error() {
     let result = Coordinate::from_str("40.12l3456,116.654321");
-    assert_eq!(result, Err("lat parse error"));
+    assert_eq!(result, Err(CoordParseError::LatParseError));
 }
 
 #[test]
 fn test_lon_error() {
     let result = Coordinate::from_str("40.123456,116.6543l21");
-    assert_eq!(result, Err("lon parse error"));
+    assert_eq!(result, Err(CoordParseError::LonParseError));
 }
