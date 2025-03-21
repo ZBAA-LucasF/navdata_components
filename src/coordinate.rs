@@ -1,3 +1,4 @@
+use crate::coordinate::CoordParseError::NoMatchingFormat;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -51,26 +52,31 @@ pub enum CoordParseError {
 }
 
 /// 将输入的字符串变成f64类型的数值
-fn parse(s: &str) -> Option<f64> {
-    let mut result: f64 = 0.0;
+fn parse(s: &str) -> Result<f64, CoordParseError> {
+    RE_SINGLE
+        .iter()
+        .find_map(|r| r.captures(s))
+        .map(|group| {
+            let sum = (2..group.len())
+                .map(|i| {
+                    group
+                        .get(i)
+                        .and_then(|m| m.as_str().parse::<f64>().ok())
+                        .map(|num| num * RATIO.get(&i).unwrap_or(&1.0))
+                        .unwrap_or(0.0)
+                })
+                .sum::<f64>();
+            let sign = group
+                .get(1)
+                .map(|m| match m.as_str() {
+                    "S" | "W" | "-" => -1.0,
+                    _ => 1.0,
+                })
+                .unwrap_or(1.0);
 
-    for r in RE_SINGLE.iter() {
-        if r.is_match(s) {
-            let group = r.captures(s).unwrap();
-            for i in 2..group.len() {
-                result +=
-                    group.get(i).unwrap().as_str().parse::<f64>().unwrap() * RATIO.get(&i).unwrap();
-            }
-
-            result *= match group.get(1).unwrap().as_str() {
-                "S" | "W" | "-" => -1.0,
-                _ => 1.0,
-            };
-
-            return Some(result);
-        }
-    }
-    None
+            sum * sign
+        })
+        .ok_or(NoMatchingFormat)
 }
 
 impl FromStr for Coordinate {
@@ -78,22 +84,23 @@ impl FromStr for Coordinate {
 
     /// 通过字符串创建Coordinate
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        for r in RE_COMBINE.iter() {
-            if r.is_match(s) {
-                let group = r.captures(s).unwrap();
-                return Ok(Coordinate {
-                    lat: match parse(group.get(1).unwrap().as_str()) {
-                        Some(x) => x,
-                        None => return Err(Self::Err::LatParseError),
-                    },
-                    lon: match parse(group.get(2).unwrap().as_str()) {
-                        Some(x) => x,
-                        None => return Err(Self::Err::LonParseError),
-                    },
-                });
-            }
-        }
-        Err(Self::Err::NoMatchingFormat)
+        RE_COMBINE
+            .iter()
+            .find_map(|r| r.captures(s))
+            .map(|group| {
+                let lat = group
+                    .get(1)
+                    .ok_or(Self::Err::LatParseError)
+                    .and_then(|m| parse(m.as_str()).map_err(|_| Self::Err::LatParseError))?;
+
+                let lon = group
+                    .get(2)
+                    .ok_or(Self::Err::LonParseError)
+                    .and_then(|m| parse(m.as_str()).map_err(|_| Self::Err::LonParseError))?;
+
+                Ok(Coordinate { lat, lon })
+            })
+            .unwrap_or(Err(NoMatchingFormat))
     }
 }
 
