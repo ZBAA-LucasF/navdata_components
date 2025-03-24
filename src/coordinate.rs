@@ -21,6 +21,7 @@ lazy_static! {
     static ref RE_SINGLE: Vec<Regex> = vec![
         Regex::new(r"^([NSEW])([01]?\d{2})(\d{2}\.\d*)$").unwrap(),
         Regex::new(r"^([NSEW])([01]?\d{2})(\d{2})(\d{2}\.\d*)$").unwrap(),
+        Regex::new(r"^([NSEW])([01]?\d{2})(\d{2})(\d{2})(\d{2})$").unwrap(),
         Regex::new(r"^([NSEW])([01]?\d{2})(\d{2})(\d{2})$").unwrap(),
         Regex::new(r"^([NSEW])(\d{3})\.(\d{2})\.(\d{2}\.\d{3})$").unwrap(),
         Regex::new(r"^([NSEW]) ([01]?\d{2}) (\d{2}\.\d*)$").unwrap(),
@@ -28,7 +29,7 @@ lazy_static! {
     ];
 
     /// 表示单位换算时的比例
-    static ref RATIO: HashMap<usize, f64> = vec![(2, 1.0), (3, 1.0 / 60.0), (4, 1.0 / 3600.0)]
+    static ref RATIO: HashMap<usize, f64> = vec![(2, 1.0), (3, 1.0 / 60.0), (4, 1.0 / 3600.0), (5, 1.0 / 360000.0)]
         .into_iter()
         .collect();
 

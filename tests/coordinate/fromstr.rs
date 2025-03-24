@@ -193,6 +193,18 @@ fn test_fromstr_xx_2() {
 }
 
 #[test]
+fn test_fromstr_arinc424() {
+    let result = Coordinate::from_str("N39113625E116342500").unwrap();
+    assert_eq!(
+        result,
+        Coordinate {
+            lat: 39.19340277777777,
+            lon: 116.5736111111111,
+        }
+    )
+}
+
+#[test]
 fn test_lat_error() {
     let result = Coordinate::from_str("40.12l3456,116.654321");
     assert_eq!(result, Err(CoordParseError::LatParseError));
