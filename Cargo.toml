@@ -1,6 +1,6 @@
 [package]
 name = "navdata_components"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 repository = "https://github.com/ZBAA-LucasF/navdata_components"
 authors = ['Lucas.F']

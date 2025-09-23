@@ -2,6 +2,7 @@ use crate::coordinate::CoordParseError::NoMatchingFormat;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::fmt::{write, Display, Formatter};
 use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone)]
@@ -51,6 +52,14 @@ pub enum CoordParseError {
     /// 没有匹配的格式
     NoMatchingFormat,
 }
+
+impl Display for CoordParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for CoordParseError {}
 
 /// 将输入的字符串变成f64类型的数值
 fn parse(s: &str) -> Result<f64, CoordParseError> {
