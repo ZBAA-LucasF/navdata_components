@@ -52,12 +52,10 @@ pub fn get_circle_distance(raw: &Coordinate, target: &Coordinate) -> f64 {
     let rad_lng2 = target.lon.to_radians();
     let a = rad_lat1 - rad_lat2;
     let b = rad_lng1 - rad_lng2;
-    let result = 2.0
-        * ((a / 2.0).sin().powi(2) + rad_lat1.cos() * rad_lat2.cos() * (b / 2.0).sin().powi(2))
-            .sqrt()
-            .asin()
-        * EARTH_RADIUS;
-    result
+    2.0 * ((a / 2.0).sin().powi(2) + rad_lat1.cos() * rad_lat2.cos() * (b / 2.0).sin().powi(2))
+        .sqrt()
+        .asin()
+        * EARTH_RADIUS
 }
 
 /// 获取WGS-84模型下两点之间的距离（Vincenty公式）

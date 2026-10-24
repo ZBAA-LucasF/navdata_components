@@ -2,7 +2,7 @@ use crate::coordinate::CoordParseError::NoMatchingFormat;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::fmt::{write, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone)]
