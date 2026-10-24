@@ -2,7 +2,7 @@ use crate::coordinate::CoordParseError::NoMatchingFormat;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::fmt::{write, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Copy, Clone)]
@@ -171,4 +171,34 @@ impl Coordinate {
     pub fn lon_md(&self) -> f64 {
         self.lon.fract() * 60.0
     }
+
+    /// 纬度写成 ARINC 424 的定长字段：`Nddmmssss`，共 9 个字符。
+    ///
+    /// 秒带两位小数（1/100 秒），所以是 `dd` + `mm` + `ssss`。
+    pub fn to_arinc_lat(&self) -> String {
+        encode_arinc(self.lat, 2, 'N', 'S')
+    }
+
+    /// 经度写成 ARINC 424 的定长字段：`Edddmmssss`，共 10 个字符。
+    pub fn to_arinc_lon(&self) -> String {
+        encode_arinc(self.lon, 3, 'E', 'W')
+    }
+}
+
+/// 把十进制度写成 `半球 + 度 + 分 + 秒(两位小数)` 的定长形式。
+///
+/// 先把绝对值换成「百分之一秒」的整数再拆分，秒进位到分、分进位到度都由整数
+/// 运算自然完成，不需要单独处理。`-0.0` 与 `0.0` 相等，所以赤道和本初子午线
+/// 一律落在北/东半球。
+fn encode_arinc(value: f64, degree_digits: usize, positive: char, negative: char) -> String {
+    let hemisphere = if value < 0.0 { negative } else { positive };
+    let total_hundredths = (value.abs() * 360_000.0).round() as u64;
+    let degrees = total_hundredths / 360_000;
+    let remainder = total_hundredths % 360_000;
+    let minutes = remainder / 6_000;
+    let seconds = remainder % 6_000;
+    format!(
+        "{hemisphere}{degrees:0width$}{minutes:02}{seconds:04}",
+        width = degree_digits
+    )
 }

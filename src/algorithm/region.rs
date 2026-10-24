@@ -27,12 +27,12 @@ pub fn is_point_in_area(point: &Coordinate, area: &[Coordinate]) -> bool {
             (area[i].lat, area[i].lon, area[i + 1].lat, area[i + 1].lon)
         };
 
-        if ((a_lat >= d_lat1) && (a_lat < d_lat2)) || ((a_lat >= d_lat2) && (a_lat < d_lat1)) {
-            if (d_lat1 - d_lat2).abs() > 0.0 {
-                let d_lon = d_lon1 - ((d_lon1 - d_lon2) * (d_lat1 - a_lat)) / (d_lat1 - d_lat2);
-                if d_lon < a_lon {
-                    i_sum += 1;
-                }
+        let crosses_latitude =
+            ((a_lat >= d_lat1) && (a_lat < d_lat2)) || ((a_lat >= d_lat2) && (a_lat < d_lat1));
+        if crosses_latitude && (d_lat1 - d_lat2).abs() > 0.0 {
+            let d_lon = d_lon1 - ((d_lon1 - d_lon2) * (d_lat1 - a_lat)) / (d_lat1 - d_lat2);
+            if d_lon < a_lon {
+                i_sum += 1;
             }
         }
     }
