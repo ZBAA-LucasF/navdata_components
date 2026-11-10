@@ -150,9 +150,8 @@ pub fn get_distance(raw: &Coordinate, target: &Coordinate) -> f64 {
 
 /// 获取WGS-84模型下从源坐标到目标坐标的初始真方位（Vincenty反解）
 ///
-/// 与 [`get_angle`] 的平面近似不同，这里与
-/// [`get_colocated_coord`](crate::algorithm::position_transformation::get_colocated_coord)
-/// 互为逆运算：按返回的方位和 [`get_distance`] 的距离正算，可以回到目标点。
+/// 与 [`get_colocated_coord`](crate::algorithm::position_transformation::get_colocated_coord)
+/// 互为逆运算：按返回的方位和 [`get_distance`] 的距离正算，即回到目标点。
 ///
 /// # 参数
 ///
@@ -161,7 +160,7 @@ pub fn get_distance(raw: &Coordinate, target: &Coordinate) -> f64 {
 ///
 /// # 返回值
 ///
-/// 真方位（度数，[0, 360)）。两点重合时返回 0；近对跖点不收敛时退回 [`get_angle`]。
+/// 真方位（度数，[0, 360)）。两点重合时返回 0；近对跖点迭代发散时改用 [`get_angle`] 的平面近似。
 pub fn get_azimuth(raw: &Coordinate, target: &Coordinate) -> f64 {
     const F: f64 = 1.0 / 298.2572236;
 
