@@ -1,17 +1,16 @@
 //! 宽松的坐标文本解析。
 //!
-//! [`Coordinate::from_str`](std::str::FromStr) 只接受固定的几种写法，适合解析
-//! 数据库与 ARINC 424 字段；这里的 [`parse_flexible`] 面向人工输入和航图正文：
+//! [`parse_flexible`] 面向人工输入和航图正文（数据库与 ARINC 424 字段使用
+//! [`Coordinate::from_str`](std::str::FromStr)）：
 //! 半球标记可写在开头或末尾、经纬度可前后颠倒、度分秒可用空格或 `°′″` 分隔，
 //! 也接受紧凑写法（`N372857E1125818`）和十进制度。
 //!
-//! 解析是严格的：分秒越界、半球标记与正负号混用、多余字符等一律报错，不会
-//! 悄悄「修正」输入。
+//! 分秒越界、半球标记与正负号混用、多余字符等输入均返回 [`FlexibleParseError`]。
 
 use crate::coordinate::Coordinate;
 use std::fmt::{Display, Formatter};
 
-/// 没有半球标记时，两个数值的先后顺序。
+/// 数值不带半球标记时，两个数值的先后顺序。
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum AxisOrder {
     /// 先纬度后经度（默认）
@@ -188,7 +187,7 @@ fn axis(raw: &str, latitude: bool) -> Result<f64, FlexibleParseError> {
 /// - 符号：`N39°54′00″ E116°24′00″`、`39°54′00″N 116°24′00″E`
 /// - 经度在前：`E1162400 N395400`、`116.4E 39.9N`
 ///
-/// 没有半球标记时按 `order` 决定先后。
+/// 数值不带半球标记时按 `order` 决定先后。
 pub fn parse_flexible(text: &str, order: AxisOrder) -> Result<Coordinate, FlexibleParseError> {
     use FlexibleParseError::*;
     let text = text.trim().to_uppercase().replace('，', ",");

@@ -1,7 +1,7 @@
 //! 以 WGS-84 正解生成圆、圆弧和扇形的顶点。
 //!
 //! 方位一律是真方位（度，正北为 0，顺时针增大），半径单位为米。输出的经度规整
-//! 到 [-180, 180)，靠近日界线的图形不会因为 181° 之类的值被下游拒绝。
+//! 到 [-180, 180)。
 
 use crate::algorithm::position_transformation::get_colocated_coord;
 use crate::coordinate::Coordinate;
@@ -50,7 +50,7 @@ fn normalized(p: Coordinate) -> Coordinate {
 /// - `radius` - 半径，单位为米
 /// - `start_bearing` / `end_bearing` - 圆心到起点、终点的真方位
 /// - `direction` - 走向；起止方位相同时生成整圈
-/// - `max_step` - 相邻顶点间的最大圆心角（度），不大于 0 时按 1°
+/// - `max_step` - 相邻顶点间的最大圆心角（度），取值需大于 0，否则按 1°
 ///
 /// 顶点数为 `ceil(|扫过角度| / max_step) + 1`，且至少 3 个。
 pub fn arc(
