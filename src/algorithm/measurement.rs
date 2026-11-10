@@ -147,3 +147,64 @@ pub fn get_distance(raw: &Coordinate, target: &Coordinate) -> f64 {
 
     B * a * (sigma - delta_sigma)
 }
+
+/// 获取WGS-84模型下从源坐标到目标坐标的初始真方位（Vincenty反解）
+///
+/// 与 [`get_angle`] 的平面近似不同，这里与
+/// [`get_colocated_coord`](crate::algorithm::position_transformation::get_colocated_coord)
+/// 互为逆运算：按返回的方位和 [`get_distance`] 的距离正算，可以回到目标点。
+///
+/// # 参数
+///
+/// - `raw` - 源坐标
+/// - `target` - 目标坐标
+///
+/// # 返回值
+///
+/// 真方位（度数，[0, 360)）。两点重合时返回 0；近对跖点不收敛时退回 [`get_angle`]。
+pub fn get_azimuth(raw: &Coordinate, target: &Coordinate) -> f64 {
+    const F: f64 = 1.0 / 298.2572236;
+
+    let l = (target.lon - raw.lon).to_radians();
+    let u1 = ((1.0 - F) * raw.lat.to_radians().tan()).atan();
+    let u2 = ((1.0 - F) * target.lat.to_radians().tan()).atan();
+    let (sin_u1, cos_u1) = u1.sin_cos();
+    let (sin_u2, cos_u2) = u2.sin_cos();
+
+    let mut lambda = l;
+    for _ in 0..200 {
+        let (sin_lambda, cos_lambda) = lambda.sin_cos();
+        let sin_sigma = ((cos_u2 * sin_lambda).powi(2)
+            + (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda).powi(2))
+        .sqrt();
+        if sin_sigma == 0.0 {
+            return 0.0;
+        }
+        let cos_sigma = sin_u1 * sin_u2 + cos_u1 * cos_u2 * cos_lambda;
+        let sigma = sin_sigma.atan2(cos_sigma);
+        let sin_alpha = cos_u1 * cos_u2 * sin_lambda / sin_sigma;
+        let cos_sq_alpha = 1.0 - sin_alpha * sin_alpha;
+        let cos_2_sigma_m = if cos_sq_alpha == 0.0 {
+            0.0
+        } else {
+            cos_sigma - 2.0 * sin_u1 * sin_u2 / cos_sq_alpha
+        };
+        let c = F / 16.0 * cos_sq_alpha * (4.0 + F * (4.0 - 3.0 * cos_sq_alpha));
+        let previous = lambda;
+        lambda = l
+            + (1.0 - c)
+                * F
+                * sin_alpha
+                * (sigma
+                    + c * sin_sigma
+                        * (cos_2_sigma_m + c * cos_sigma * (-1.0 + 2.0 * cos_2_sigma_m.powi(2))));
+        if (lambda - previous).abs() <= 1e-12 {
+            let (sin_lambda, cos_lambda) = lambda.sin_cos();
+            let alpha1 = (cos_u2 * sin_lambda)
+                .atan2(cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda)
+                .to_degrees();
+            return alpha1.rem_euclid(360.0);
+        }
+    }
+    get_angle(raw, target, 0.0).rem_euclid(360.0)
+}
